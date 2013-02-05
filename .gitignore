@@ -1,0 +1,4 @@
+*.jpage
+bin/
+.classpath
+.project
