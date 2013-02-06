@@ -201,12 +201,12 @@ public class NeuralNetwork {
 			}
 		}
 		
-		double inputs[][] = { {170}, {190}, {165}, {180}, {210} };
-		double expectedOutputs[][] = { {1}, {0}, {1}, {0}, {1} };
+		double inputs[][] = { {170,60}, {190,70}, {175,105}, {180,90}, {210,100} };
+		double expectedOutputs[][] = { {1}, {1}, {1}, {0}, {0} };
 		
-		int number_of_entries = 30;
+		int number_of_entries = 20;
 		ArrayList<Entry> entries = new ArrayList<Entry>(number_of_entries);
-		int[] topology = new int[] {1, 2, 1};
+		int[] topology = new int[] {2, 4, 1};
 		for (int i = 0; i < number_of_entries; i++) {
 			Entry e = new Entry();
 			e.nn = new NeuralNetwork(topology);
@@ -214,12 +214,14 @@ public class NeuralNetwork {
 			entries.add(e);
 		}
 		
-		int new_networks = 10;
-		int mutate_networks = 10;
-		int number_of_cycles = 0;
+		int new_networks = number_of_entries / 10 * 1;
+		int mutate_networks = number_of_entries / 10 * 3;
+		int number_of_cycles = 500000;
+		double mutate_percentage = 0.5;
 		
 		int kill_count = new_networks + mutate_networks;
 		
+
 		for (int n = 0; n <= number_of_cycles; n++) {
 			
 			// Evaluate networks
@@ -227,23 +229,24 @@ public class NeuralNetwork {
 				double error = 0;
 				
 				for (int i = 0; i < inputs.length; i++) {
-					error += Math.pow(expectedOutputs[i][0] - entries.get(entry).nn.calculateOutput(inputs[i])[0], 2);
+					error += Math.pow(entries.get(entry).nn.calculateOutput(inputs[i])[0] - expectedOutputs[i][0], 2);
 				}
 				
-				entries.get(entry).fitness = error / inputs.length;
+				entries.get(entry).fitness = -error / inputs.length;
 			}
 			
 			Collections.sort(entries);
-			
+						
 			if (n != number_of_cycles) {
 				// Kill, create new, etc.
 				
 				entries.subList(entries.size() - kill_count, entries.size()).clear();
 				
+				Random r = new Random();
 				for (int i = 0; i < mutate_networks; i++) {
 					Entry e = new Entry();
 					e.nn = new NeuralNetwork(topology);
-					e.nn.setWeights(entries.get(i).nn.getWeights());
+					e.nn.setWeights(Utility.mutate(entries.get(i).nn.getWeights(), mutate_percentage, r));
 					
 					entries.add(e);
 				}
@@ -256,7 +259,16 @@ public class NeuralNetwork {
 				}
 			}
 		}
+				
+		for (int i = 0; i < entries.size(); i++) {
+			System.out.println(i + ": " + entries.get(i).fitness);
+		}
 		
-		System.out.println(entries.get(0).fitness);
+		NeuralNetwork abc = new NeuralNetwork(topology, entries.get(0).nn.getWeights());
+		System.out.println(abc.calculateOutput(inputs[0])[0]);
+		System.out.println(abc.calculateOutput(inputs[1])[0]);
+		System.out.println(abc.calculateOutput(inputs[2])[0]);
+		System.out.println(abc.calculateOutput(inputs[3])[0]);
+		System.out.println(abc.calculateOutput(inputs[4])[0]);
 	}
 }
