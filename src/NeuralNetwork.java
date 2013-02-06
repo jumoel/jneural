@@ -204,9 +204,9 @@ public class NeuralNetwork {
 		double inputs[][] = { {170,60}, {190,70}, {175,105}, {180,90}, {210,100} };
 		double expectedOutputs[][] = { {1}, {1}, {1}, {0}, {0} };
 		
-		int number_of_entries = 20;
+		int number_of_entries = 50;
 		ArrayList<Entry> entries = new ArrayList<Entry>(number_of_entries);
-		int[] topology = new int[] {2, 4, 1};
+		int[] topology = new int[] {2, 3, 1};
 		for (int i = 0; i < number_of_entries; i++) {
 			Entry e = new Entry();
 			e.nn = new NeuralNetwork(topology);
@@ -216,7 +216,7 @@ public class NeuralNetwork {
 		
 		int new_networks = number_of_entries / 10 * 1;
 		int mutate_networks = number_of_entries / 10 * 3;
-		int number_of_cycles = 500000;
+		int number_of_cycles = 1000000;
 		double mutate_percentage = 0.5;
 		
 		int kill_count = new_networks + mutate_networks;
@@ -229,7 +229,7 @@ public class NeuralNetwork {
 				double error = 0;
 				
 				for (int i = 0; i < inputs.length; i++) {
-					error += Math.pow(entries.get(entry).nn.calculateOutput(inputs[i])[0] - expectedOutputs[i][0], 2);
+					error += Math.abs(entries.get(entry).nn.calculateOutput(inputs[i])[0] - expectedOutputs[i][0]);
 				}
 				
 				entries.get(entry).fitness = -error / inputs.length;
