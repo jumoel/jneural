@@ -1,7 +1,7 @@
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Random;
-
-import javax.swing.text.Position.Bias;
 
 
 public class NeuralNetwork {
@@ -48,6 +48,14 @@ public class NeuralNetwork {
 		
 		weight_count = CalculateWeightCount(topology);
 		InitializeWeightArrays(layers);
+		
+		setRandomWeights();
+	}
+	
+	public NeuralNetwork(int[] topology, double[] weights) {
+		this(topology);
+		
+		setWeights(weights);
 	}
 	
 	private static void InitializeWeightArrays(ArrayList<Layer> layers) {
@@ -95,6 +103,26 @@ public class NeuralNetwork {
 				weight_index++;				
 			}
 		}
+	}
+	
+	public double[] getWeights() {
+		double[] weights = new double[weight_count];
+		
+		int weight_index = 0;
+		for (int layer = 0; layer < layers.size() - 1; layer++) {
+			for (Neuron neuron : layers.get(layer).neurons) {
+				// Regular weights
+				for (int i = 0; i < neuron.neuron_weights.length; i++) {
+					weights[weight_index] = neuron.neuron_weights[i];
+					weight_index++;
+				}
+				
+				weights[weight_index] = neuron.bias_weight;
+				weight_index++;				
+			}
+		}
+		
+		return weights;
 	}
 	
 	public void setRandomWeights() {
@@ -164,6 +192,71 @@ public class NeuralNetwork {
 	}
 	
 	public static void main(String[] args) {
-	
+		final class Entry implements Comparable<Entry> {
+			public NeuralNetwork nn;
+			public double fitness;
+
+			public int compareTo(Entry arg0) {
+				return Double.compare(-fitness, -arg0.fitness);
+			}
+		}
+		
+		double inputs[][] = { {170}, {190}, {165}, {180}, {210} };
+		double expectedOutputs[][] = { {1}, {0}, {1}, {0}, {1} };
+		
+		int number_of_entries = 30;
+		ArrayList<Entry> entries = new ArrayList<Entry>(number_of_entries);
+		int[] topology = new int[] {1, 2, 1};
+		for (int i = 0; i < number_of_entries; i++) {
+			Entry e = new Entry();
+			e.nn = new NeuralNetwork(topology);
+			
+			entries.add(e);
+		}
+		
+		int new_networks = 10;
+		int mutate_networks = 10;
+		int number_of_cycles = 0;
+		
+		int kill_count = new_networks + mutate_networks;
+		
+		for (int n = 0; n <= number_of_cycles; n++) {
+			
+			// Evaluate networks
+			for (int entry = 0; entry < entries.size(); entry++) {
+				double error = 0;
+				
+				for (int i = 0; i < inputs.length; i++) {
+					error += Math.pow(expectedOutputs[i][0] - entries.get(entry).nn.calculateOutput(inputs[i])[0], 2);
+				}
+				
+				entries.get(entry).fitness = error / inputs.length;
+			}
+			
+			Collections.sort(entries);
+			
+			if (n != number_of_cycles) {
+				// Kill, create new, etc.
+				
+				entries.subList(entries.size() - kill_count, entries.size()).clear();
+				
+				for (int i = 0; i < mutate_networks; i++) {
+					Entry e = new Entry();
+					e.nn = new NeuralNetwork(topology);
+					e.nn.setWeights(entries.get(i).nn.getWeights());
+					
+					entries.add(e);
+				}
+				
+				for (int i = 0; i < new_networks; i++) {
+					Entry e = new Entry();
+					e.nn = new NeuralNetwork(topology);
+					
+					entries.add(e);
+				}
+			}
+		}
+		
+		System.out.println(entries.get(0).fitness);
 	}
 }
